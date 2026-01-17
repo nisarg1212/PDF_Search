@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc;
+  --foreground: #1e293b;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* PDF text layer - make text selectable with yellow highlight */
+.react-pdf__Page__textContent {
+  user-select: text !important;
+  cursor: text;
+}
+
+.react-pdf__Page__textContent span::selection {
+  background-color: rgba(250, 204, 21, 0.5) !important;
+}
+
+/* PDF page styling */
+.react-pdf__Page {
+  position: relative;
+}
+
+.react-pdf__Page__canvas {
+  display: block;
+  margin: 0 auto;
+}
+
+/* Animation for toolbar */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Chat message markdown styling */
+.whitespace-pre-wrap code {
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.875em;
+}
+
+/* Selection highlights */
+::selection {
+  background-color: rgba(250, 204, 21, 0.5);
+}
