@@ -1,12 +1,11 @@
 /**
- * GeminiChat Component with Persistent Chat History
- * 
- * Uses localStorage to persist chat history across page reloads.
+ * GeminiChat Component
  */
 
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { streamFromGemini } from "@/lib/gemini";
 
 interface Message {
@@ -37,7 +36,6 @@ export default function GeminiChat({
     const messagesRef = useRef<Message[]>([]);
     const initializedRef = useRef(false);
 
-    // Load chat history from localStorage on mount
     useEffect(() => {
         if (!initializedRef.current) {
             initializedRef.current = true;
@@ -49,22 +47,16 @@ export default function GeminiChat({
                     messagesRef.current = parsed;
                 }
             } catch (e) {
-                console.error("Failed to load chat history:", e);
+                console.error("Failed to load chat:", e);
             }
         }
     }, []);
 
-    // Save chat history to localStorage whenever it changes
     useEffect(() => {
         messagesRef.current = messages;
-        // Only save completed messages (not streaming)
         const toSave = messages.filter(m => !m.isStreaming);
         if (toSave.length > 0) {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
-            } catch (e) {
-                console.error("Failed to save chat history:", e);
-            }
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
         }
     }, [messages]);
 
@@ -86,57 +78,45 @@ export default function GeminiChat({
         };
 
         const currentHistory = messagesRef.current.filter(m => !m.isStreaming);
-
         setMessages((prev) => [...prev, userMessage]);
         setInput("");
         setIsLoading(true);
         setPendingImage(undefined);
 
-        const assistantMessage: Message = {
-            role: "assistant",
-            content: "",
-            isStreaming: true,
-        };
+        const assistantMessage: Message = { role: "assistant", content: "", isStreaming: true };
         setMessages((prev) => [...prev, assistantMessage]);
 
         try {
             let fullResponse = "";
-
             await streamFromGemini(
-                messageText || "Analyze this image and describe what you see.",
+                messageText || "Analyze this image.",
                 imageToSend,
                 (chunk) => {
                     fullResponse += chunk;
                     setMessages((prev) => {
                         const updated = [...prev];
-                        const lastIdx = updated.length - 1;
-                        updated[lastIdx] = { ...updated[lastIdx], content: fullResponse };
+                        updated[updated.length - 1] = { ...updated[updated.length - 1], content: fullResponse };
                         return updated;
                     });
                 },
                 currentHistory
             );
-
             setMessages((prev) => {
                 const updated = [...prev];
-                const lastIdx = updated.length - 1;
-                updated[lastIdx] = { ...updated[lastIdx], isStreaming: false };
+                updated[updated.length - 1] = { ...updated[updated.length - 1], isStreaming: false };
                 return updated;
             });
         } catch (error) {
-            console.error("Chat error:", error);
             setMessages((prev) => {
                 const updated = [...prev];
-                const lastIdx = updated.length - 1;
-                updated[lastIdx] = {
+                updated[updated.length - 1] = {
                     role: "assistant",
-                    content: `Error: ${error instanceof Error ? error.message : "Failed to get response."}`,
+                    content: `Error: ${error instanceof Error ? error.message : "Failed"}`,
                     isStreaming: false,
                 };
                 return updated;
             });
         }
-
         setIsLoading(false);
     }, []);
 
@@ -153,9 +133,7 @@ export default function GeminiChat({
 
     const handleManualSend = () => {
         const text = input.trim();
-        if (text || pendingImage) {
-            handleSend(text || "Analyze this image", pendingImage);
-        }
+        if (text || pendingImage) handleSend(text || "Analyze this image", pendingImage);
     };
 
     const handleClear = () => {
@@ -172,107 +150,150 @@ export default function GeminiChat({
     };
 
     return (
-        <div className="flex flex-col h-full bg-white">
-            <div className="flex items-center justify-between p-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
-                <div className="flex items-center gap-2">
-                    <span className="text-xl">✨</span>
-                    <span className="font-semibold">AI Chat</span>
-                    {messages.length > 0 && (
-                        <span className="text-xs bg-white/20 px-2 py-0.5 rounded">
-                            {messages.length} messages
-                        </span>
-                    )}
+        <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+                <div className="flex items-center gap-3">
+                    <motion.span
+                        className="text-2xl"
+                        animate={{ rotate: [0, 10, -10, 0] }}
+                        transition={{ duration: 3, repeat: Infinity }}
+                    >
+                        ✨
+                    </motion.span>
+                    <div>
+                        <h2 className="font-semibold text-white">AI Assistant</h2>
+                        <p className="text-xs text-slate-500">
+                            {messages.length > 0 ? `${messages.length} messages` : "Ready to help"}
+                        </p>
+                    </div>
                 </div>
                 <button
                     onClick={handleClear}
-                    className="text-sm px-3 py-1 bg-white/20 hover:bg-white/30 rounded-lg transition"
+                    className="px-3 py-1.5 text-sm text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors border border-white/10"
                 >
-                    Clear Chat
+                    Clear
                 </button>
             </div>
 
+            {/* Messages */}
             <div className="flex-1 overflow-auto p-4 space-y-4">
-                {messages.length === 0 && (
-                    <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                        <span className="text-6xl mb-4">💬</span>
-                        <p className="text-center">
-                            Select text, images, or equations from the PDF
-                            <br />
-                            and use the action buttons to chat with AI
-                        </p>
-                        <p className="text-xs mt-4 text-gray-300">
-                            💾 Chat history is saved automatically
-                        </p>
-                    </div>
-                )}
-
-                {messages.map((msg, idx) => (
-                    <div
-                        key={idx}
-                        className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-                    >
-                        <div
-                            className={`max-w-[80%] rounded-2xl p-4 ${msg.role === "user"
-                                    ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-br-md"
-                                    : "bg-gray-100 text-gray-800 rounded-bl-md"
-                                }`}
+                <AnimatePresence mode="popLayout">
+                    {messages.length === 0 && (
+                        <motion.div
+                            className="flex flex-col items-center justify-center h-full text-center"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
                         >
-                            {msg.imageData && (
-                                <div className="mb-2">
-                                    <img
-                                        src={`data:image/png;base64,${msg.imageData}`}
-                                        alt="Selection"
-                                        className="max-w-[200px] rounded-lg border-2 border-white/50"
-                                    />
-                                </div>
-                            )}
-                            <div className="whitespace-pre-wrap">
-                                {msg.content}
-                                {msg.isStreaming && (
-                                    <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />
-                                )}
+                            <motion.span
+                                className="text-6xl mb-4"
+                                animate={{ y: [0, -10, 0] }}
+                                transition={{ duration: 2, repeat: Infinity }}
+                            >
+                                💬
+                            </motion.span>
+                            <h3 className="text-lg font-semibold text-white mb-2">Start a Conversation</h3>
+                            <p className="text-slate-500 text-sm max-w-md">
+                                Select content from the PDF and use the action buttons
+                            </p>
+                            <div className="flex items-center gap-2 mt-4 text-xs text-slate-500">
+                                <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                                Chat history saved
                             </div>
-                        </div>
-                    </div>
-                ))}
+                        </motion.div>
+                    )}
+
+                    {messages.map((msg, idx) => (
+                        <motion.div
+                            key={idx}
+                            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                            layout
+                        >
+                            <div
+                                className={`max-w-[85%] rounded-2xl p-4 ${msg.role === "user"
+                                        ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-br-md"
+                                        : "bg-white/5 border border-white/10 text-slate-100 rounded-bl-md"
+                                    }`}
+                            >
+                                {msg.imageData && (
+                                    <div className="mb-3">
+                                        <img
+                                            src={`data:image/png;base64,${msg.imageData}`}
+                                            alt="Selection"
+                                            className="max-w-[180px] rounded-lg border border-white/20 shadow-lg"
+                                        />
+                                    </div>
+                                )}
+                                <div className="whitespace-pre-wrap leading-relaxed text-sm">
+                                    {msg.content}
+                                    {msg.isStreaming && (
+                                        <span className="inline-block w-0.5 h-4 bg-violet-400 ml-1 animate-pulse" />
+                                    )}
+                                </div>
+                            </div>
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
                 <div ref={messagesEndRef} />
             </div>
 
-            {pendingImage && (
-                <div className="px-4 py-2 bg-blue-50 border-t flex items-center gap-2">
-                    <img
-                        src={`data:image/png;base64,${pendingImage}`}
-                        alt="Attached"
-                        className="w-12 h-12 object-cover rounded"
-                    />
-                    <span className="text-sm text-blue-600">Image attached</span>
-                    <button
-                        onClick={() => setPendingImage(undefined)}
-                        className="ml-auto text-red-500 hover:text-red-700"
+            {/* Pending image */}
+            <AnimatePresence>
+                {pendingImage && (
+                    <motion.div
+                        className="mx-4 mb-2 p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-xl flex items-center gap-3"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
                     >
-                        Remove
-                    </button>
-                </div>
-            )}
+                        <img
+                            src={`data:image/png;base64,${pendingImage}`}
+                            alt="Attached"
+                            className="w-12 h-12 object-cover rounded-lg border border-white/20"
+                        />
+                        <span className="text-sm text-cyan-300">Image ready</span>
+                        <button
+                            onClick={() => setPendingImage(undefined)}
+                            className="ml-auto text-red-400 hover:text-red-300 text-sm"
+                        >
+                            Remove
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
-            <div className="p-4 border-t bg-gray-50">
-                <div className="flex gap-2">
+            {/* Input */}
+            <div className="p-4 border-t border-white/10">
+                <div className="flex gap-3">
                     <input
                         type="text"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder="Ask a follow-up question..."
-                        className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        placeholder="Ask a question..."
+                        className="input-field flex-1"
                         disabled={isLoading}
                     />
-                    <button
+                    <motion.button
                         onClick={handleManualSend}
                         disabled={isLoading || (!input.trim() && !pendingImage)}
-                        className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium shadow-lg hover:shadow-xl"
+                        className="px-6 py-2.5 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl font-medium text-sm disabled:opacity-50 hover:shadow-lg hover:shadow-violet-500/20 transition-all min-w-[90px]"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                     >
-                        {isLoading ? <span className="animate-spin">⏳</span> : "Send"}
-                    </button>
+                        {isLoading ? (
+                            <div className="loading-dots justify-center">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        ) : (
+                            "Send"
+                        )}
+                    </motion.button>
                 </div>
             </div>
         </div>

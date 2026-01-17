@@ -1,20 +1,20 @@
-# PDF Selection Viewer with AI Chat
+# PDF Selection Viewer
 
-A Next.js application that lets you select content from PDFs and get AI-powered explanations, summaries, and calculations.
+An AI-powered PDF study tool built with Next.js. Upload PDFs, select content, get instant AI explanations, and track your progress with annotations.
 
-![PDF Selection Viewer](https://img.shields.io/badge/Next.js-15-black?logo=next.js)
-![AI Powered](https://img.shields.io/badge/AI-GPT--4o--mini-blue?logo=openai)
+![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
+![AI Powered](https://img.shields.io/badge/AI-Gemini-blue?logo=google)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## ✨ Features
 
 - **📄 PDF Viewer** - Upload and view PDFs with zoom controls
-- **🔍 Text Selection** - Select text and get AI explanations
-- **🖼️ Image Selection** - Ctrl+drag to select regions for image analysis
-- **🧮 Equation Support** - Ask AI to explain or solve equations
-- **💬 Chat Interface** - Multi-turn conversations with context
-- **💾 Persistent Storage** - Chat history and PDF survive page reloads
-- **🎨 Modern UI** - Beautiful gradient design with Tailwind CSS
+- **🔍 Smart Selection** - Select text or Ctrl+drag for region selection
+- **🤖 AI Analysis** - Get explanations, summaries, and calculations
+- **📝 Annotations** - Mark sections as Complete/Incomplete/Pending
+- **💾 Persistence** - PDFs and annotations saved locally
+- **📚 Library** - Manage all your uploaded PDFs
+- **🎨 Modern UI** - Beautiful dark theme with animations
 
 ## 🚀 Quick Start
 
@@ -30,8 +30,8 @@ A Next.js application that lets you select content from PDFs and get AI-powered 
 cd pdf-viewer
 npm install
 
-# Add your API key to .env.local
-echo "NEXT_PUBLIC_OPENROUTER_API_KEY=your-key-here" > .env.local
+# Create .env.local with your API key
+echo "OPENROUTER_API_KEY=your-key-here" > .env.local
 
 npm run dev
 ```
@@ -40,31 +40,35 @@ Open http://localhost:3000
 
 ## 📖 Usage
 
-### Text Selection
-1. Click and drag to select text in the PDF
-2. A floating toolbar appears with action buttons
-3. Click **Explain**, **Summarize**, or **Calculate**
+### PDF Library (`/library`)
+- Upload PDFs via drag & drop
+- Set status: Complete ✓ / Incomplete ✗ / In Progress ◐
+- Click to open in viewer
 
-### Image/Region Selection
-1. Hold **Ctrl** and drag to select any region
-2. The selected area is captured as an image
-3. Click an action button to send to AI for analysis
+### PDF Viewer (`/viewer`)
+- **Text Selection**: Click and drag to select text
+- **Region Selection**: Hold **Ctrl** + drag to select any area
+- **AI Actions**: Click Explain, Summarize, or Calculate
+- **Annotations**: Mark regions with status overlays
 
-### Chat
-- Type follow-up questions in the chat
-- AI remembers previous messages for context
-- Click **Clear Chat** to start fresh
+### Annotation System
+1. Ctrl+drag to select a region
+2. Click Complete/Pending/Incomplete/Note
+3. Colored overlay appears on PDF
+4. Filter annotations using dropdown
+5. View all in sidebar panel
 
 ## 🛠️ Tech Stack
 
 | Technology | Purpose |
 |------------|---------|
-| Next.js 15 | React framework |
+| Next.js 16 | React framework |
 | react-pdf | PDF rendering |
 | OpenRouter | AI API gateway |
-| GPT-4o-mini | Vision-capable AI model |
+| Gemini Flash | Vision-capable AI |
 | Tailwind CSS | Styling |
-| localStorage | Persistence |
+| Framer Motion | Animations |
+| JSON Storage | Local persistence |
 
 ## 📁 Project Structure
 
@@ -72,43 +76,42 @@ Open http://localhost:3000
 pdf-viewer/
 ├── src/
 │   ├── app/
-│   │   ├── page.tsx        # Main layout
-│   │   └── globals.css     # Styles
+│   │   ├── page.tsx           # Landing page
+│   │   ├── viewer/page.tsx    # PDF Viewer
+│   │   ├── library/page.tsx   # PDF Library
+│   │   └── api/pdfs/          # REST API
 │   ├── components/
-│   │   ├── PDFViewer.tsx   # PDF rendering + selection
-│   │   ├── GeminiChat.tsx  # Chat interface
-│   │   └── SelectionToolbar.tsx # Action buttons
+│   │   ├── PDFViewer.tsx      # PDF + annotations
+│   │   ├── GeminiChat.tsx     # AI chat
+│   │   └── SelectionToolbar.tsx
 │   └── lib/
-│       └── gemini.ts       # AI API client
-├── public/                  # Static files
-├── .env.local              # API key (not in git)
-└── package.json
+│       ├── db.ts              # JSON storage
+│       └── gemini.ts          # AI client
+├── data/
+│   └── pdfs.json              # Local database
+└── .env.local                 # API key
 ```
-
-## 🧪 Test Cases
-
-1. **Text Explanation** - Select text → Explain
-2. **Image Analysis** - Ctrl+drag diagram → Explain
-3. **Math Calculation** - Select equation → Calculate
-4. **Follow-up Questions** - Ask "Can you explain more?"
-5. **Persistence** - Refresh page, history remains
 
 ## ⚙️ Environment Variables
 
 | Variable | Description |
 |----------|-------------|
-| `NEXT_PUBLIC_OPENROUTER_API_KEY` | OpenRouter API key |
+| `OPENROUTER_API_KEY` | Your OpenRouter API key |
 
-## 📝 Notes
+## 📝 API Routes
 
-- **Free Tier**: OpenRouter gives $1 free credit on signup
-- **Model**: Uses GPT-4o-mini for text and vision tasks
-- **Storage**: Uses localStorage (data stays in browser)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/pdfs` | GET | List all PDFs |
+| `/api/pdfs` | POST | Upload PDF |
+| `/api/pdfs/[id]` | GET | Get PDF by ID |
+| `/api/pdfs/[id]` | DELETE | Delete PDF |
+| `/api/pdfs/[id]` | PATCH | Update status |
 
 ## 📄 License
 
-MIT License - feel free to use for your projects!
+MIT License
 
 ---
 
-Built with ❤️ using Next.js and OpenRouter
+© 2026 PDF Selection Viewer

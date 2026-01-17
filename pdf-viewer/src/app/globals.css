@@ -1,82 +1,159 @@
 @import "tailwindcss";
 
-:root {
-  --background: #f8fafc;
-  --foreground: #1e293b;
+/* Base styles */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: #0f0f1a;
+  color: #f1f5f9;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* PDF text layer - make text selectable with yellow highlight */
+/* Background gradient effect */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 30%, rgba(139, 92, 246, 0.12), transparent 50%),
+    radial-gradient(ellipse 70% 50% at 80% 70%, rgba(6, 182, 212, 0.08), transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Glass panel effect */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.5);
+}
+
+/* Selection */
+::selection {
+  background: rgba(139, 92, 246, 0.4);
+}
+
+/* PDF text selection */
 .react-pdf__Page__textContent {
   user-select: text !important;
-  cursor: text;
 }
 
 .react-pdf__Page__textContent span::selection {
   background-color: rgba(250, 204, 21, 0.5) !important;
 }
 
-/* PDF page styling */
-.react-pdf__Page {
-  position: relative;
+/* Loading animation */
+.loading-dots {
+  display: flex;
+  gap: 4px;
 }
 
-.react-pdf__Page__canvas {
-  display: block;
-  margin: 0 auto;
+.loading-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #8b5cf6;
+  animation: bounce 1.4s infinite ease-in-out both;
 }
 
-/* Animation for toolbar */
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translate(-50%, 20px);
+.loading-dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.loading-dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+.loading-dots span:nth-child(3) {
+  animation-delay: 0s;
+}
+
+@keyframes bounce {
+
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
   }
 
-  to {
-    opacity: 1;
-    transform: translate(-50%, 0);
+  40% {
+    transform: scale(1);
   }
 }
 
-.animate-fade-in {
-  animation: fade-in 0.2s ease-out;
+/* Input styling */
+.input-field {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: #f1f5f9;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  width: 100%;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+.input-field:focus {
+  outline: none;
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
 }
 
-::-webkit-scrollbar-track {
-  background: #f1f5f9;
+.input-field::placeholder {
+  color: #64748b;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+/* Group/Panel styles from react-resizable-panels */
+[data-group] {
+  display: flex !important;
+  height: 100% !important;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+[data-panel] {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-/* Chat message markdown styling */
-.whitespace-pre-wrap code {
-  background: #1e293b;
-  color: #e2e8f0;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.875em;
+[data-separator] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  cursor: col-resize;
+  transition: all 0.2s ease;
 }
 
-/* Selection highlights */
-::selection {
-  background-color: rgba(250, 204, 21, 0.5);
+[data-separator]:hover>div,
+[data-separator][data-active]>div {
+  background: #8b5cf6 !important;
+  height: 80px !important;
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
 }
